@@ -1,12 +1,9 @@
 import type { NextPage } from 'next'
-import Head from 'next/head'
-import Image from 'next/image'
-import FileUpload from '../components/FileUpload'
 import styles from '../styles/Home.module.css'
 import { useForm } from "react-hook-form";
 import axios from 'axios';
 
-import { Stack, HStack, VStack, Heading, FormControl, FormHelperText, FormLabel, Input, Textarea, Text, FormErrorMessage, Button, Container, Grid, GridItem } from '@chakra-ui/react'
+import { Heading, FormControl, FormHelperText, FormLabel, Input, Text, FormErrorMessage, Button, Grid, GridItem } from '@chakra-ui/react'
 import { useState } from 'react'
 
 const defaultMetadata = {
