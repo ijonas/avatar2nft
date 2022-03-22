@@ -17,9 +17,9 @@ const parseForm = (req: NextApiRequest) => new Promise((resolve, reject) => {
 })
 
 const storeFile = async (name: string, description: string, external_url: string, file: any) => {
-  // const token = process.env.NFT_STORAGE_API_TOKEN;
+  const token = process.env.NFT_STORAGE_API_TOKEN;
+  if (!token) throw new Error("Please set the NFT_STORAGE_API_TOKEN envvar")
   console.log({file})
-  const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDMxM2ZFNjA1NjQwNzk5ZTE4NTMxMjA2NDMyOTMwQjdlMUZGMzRDOUMiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTY0Nzc4Mjc1MjEwMywibmFtZSI6IkZpcnN0In0.ewX_vXHTu_jTncc1Tijqrngc-aqxwRLkGX8s1B-L59w";
   console.log({token})
   const client = new NFTStorage({ token })
   const image = new File([await fs.promises.readFile(file.filepath)], file.originalFilename, {type: file.mimeType})
