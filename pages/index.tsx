@@ -1,31 +1,33 @@
 import type { NextPage } from 'next'
 import styles from '../styles/Home.module.css'
-import { useForm } from "react-hook-form";
 import axios from 'axios';
 
-import { Heading, FormControl, FormHelperText, FormLabel, Input, Text, FormErrorMessage, Button, Grid, GridItem } from '@chakra-ui/react'
+import { Heading, Text, Grid, GridItem, Link, Flex, Box, HStack, Spacer } from '@chakra-ui/react'
 import { useState } from 'react'
+import FileUploadForm from '../components/FileUploadForm';
+import MintingForm from '../components/MintingForm';
+import Account from '../components/Account';
+import { useAccount } from 'wagmi';
+import Connect from '../components/Connect';
 
-const defaultMetadata = {
-	"description": "Portrait of Ijonas K.",
-	"external_url": "https://ijonas.com",
-	"image": null,
-	"name": "Ijonas",
-	"attributes": [{
-		"trait_type": "Colour",
-		"value": "black and white"
-	}, {
-		"trait_type": "Pronouns",
-		"value": "he/him"
-	}]
+const extractURI = (url: string): string | undefined => {
+  const match = url.match(/^ipfs:\/\/(.*)$/)
+  if (match) {
+    return match[1]
+  }
 }
+
+const ipfsURL = (uri: string) => `https://ipfs.io/ipfs/${uri}`;
 
 const Home: NextPage = () => {
   const [uploading, setUploading] = useState(false);
+  const [finishedUpload, setFinishedUpload] = useState(false);
   const [metadataURI, setMetadataURI] = useState(undefined);
-  const { handleSubmit, register, formState: { errors } } = useForm();
+  const [storedImageURL, setStoredImageURL] = useState("");
+  const [uploadError, setUploadError] = useState("");
+  const [imageName, setImageName] = useState("");
+
   const onSubmit = ({name, description, external_url, file}: any) => {
-    console.log({name, description, external_url, file});
     setUploading(true);
     const formData = new FormData();
     formData.append('name', name);
@@ -33,89 +35,81 @@ const Home: NextPage = () => {
     formData.append('external_url', external_url);
     formData.append('file', file[0]);
     axios.post('/api/upload_nft', formData, {headers: {'Content-Type': 'multipart/form-data'}}).then(res => {
-      console.log("Uploaded")
-      console.log(res.data)
       setUploading(false);
       setMetadataURI(res.data.metadata.url)
+      const uri = extractURI(res.data.metadata.url)
+      if (uri) {
+        axios.get(ipfsURL(uri)).then(metadata => {
+          const imageURI = extractURI(metadata.data.image)
+          if (imageURI) {
+            const imageURL = ipfsURL(imageURI);
+
+            setStoredImageURL(imageURL);
+            setImageName(name);
+            setFinishedUpload(true);
+          } else {
+            setUploadError(`Unable to determine the newly created image location. ${imageURI}`)
+          }
+        })
+      } else {
+        setUploadError(`Unable to determine the newly created metadata location. ${uri}`)
+      }
+    }).catch(err => {
+      setUploadError(`Unable to upload file & metadata. ${err.message}`)
     })
   }
 
+  const [accountData, disconnect] = useAccount({fetchEns: true});
 
+  
   return (
-    <div className={styles.container}>
+    <Flex direction="column">
+      <HStack padding={5}>
+        
+        { accountData.data 
+          ? <Account disconnect={disconnect} accountData={accountData.data}></Account>
+          : <Connect></Connect>
+        }
+        <Spacer/>
+      </HStack>
       <main className={styles.main}>
         <Grid>
           <GridItem>
-
-          <Heading paddingBottom={5}>avatar2nft</Heading>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <FormControl paddingBottom={5}>
-              <FormLabel htmlFor='name'>Name</FormLabel>
-              <Input defaultValue={defaultMetadata.name} id="name" placeholder='Jane Doe' {...register("name", {required: "Name is required"})}/>
-              {errors.name && errors.name.message ? (
-                  <FormErrorMessage>{ errors.name.message}</FormErrorMessage>
-                ) : (                  
-                  <FormHelperText>Enter your name</FormHelperText>
-                )
-              }
-            </FormControl>
-
-            <FormControl paddingBottom={5}>
-              <FormLabel htmlFor='description'>Description</FormLabel>
-              <Input defaultValue={defaultMetadata.description} id="description" placeholder='Its a photo of me.' {...register("description")}/>
-              {errors.description && errors.description.message ? (
-                  <FormErrorMessage>{ errors.description.message}</FormErrorMessage>
-                ) : (                  
-                  <FormHelperText>Describe your avatar</FormHelperText>
-                )
-              }
-            </FormControl>
-
-            <FormControl paddingBottom={5}>
-              <FormLabel htmlFor='external_url'>External URL</FormLabel>
-              <Input defaultValue={defaultMetadata.external_url} id="external_url" placeholder='https://johndoe.acme.local' {...register("external_url")}/>
-              {errors.external_url && errors.external_url.message ? (
-                  <FormErrorMessage>{ errors.external_url.message}</FormErrorMessage>
-                ) : (                  
-                  <FormHelperText>A website to refer people to.</FormHelperText>
-                )
-              }
-            </FormControl>
-
-            <FormControl paddingBottom={5}>
-              <FormLabel htmlFor='file'>Avatar</FormLabel>
-              <input type="file" id="file" {...register("file", {required: "A file is required"})}></input>
-              {errors.file && errors.file.message ? (
-                  <FormErrorMessage>{ errors.file.message}</FormErrorMessage>
-                ) : (                  
-                  <FormHelperText>Please only use the common formats like JPG, GIF, or PNG.</FormHelperText>
-                )
-              }              
-            </FormControl>
-            { uploading 
-              ? (<Button colorScheme='teal' size='md' type='submit' disabled>Uploading...</Button>)
-              : (<Button colorScheme='teal' size='md' type='submit'>Upload</Button>)
+            { finishedUpload 
+              ? (<MintingForm 
+                  imageName={imageName}
+                  storedImageURL={storedImageURL} 
+                  metadataURI={metadataURI}>                    
+                  </MintingForm>)
+              : (<FileUploadForm 
+                  name="Ijonas"
+                  description="Portrait of Ijonas K." 
+                  externalURL="https://ijonas.com"
+                  onSubmit={onSubmit} 
+                  uploading={uploading}
+                  uploadError={uploadError}>            
+                </FileUploadForm>)
             }
-          </form>
-          <Text>{metadataURI}</Text>
-
-
-
+                        
           </GridItem>
-
         </Grid>
       </main>
 
       <footer className={styles.footer}>
-        <a
+        <Link
           href="https://ijonas.com"
           target="_blank"
           rel="noopener noreferrer"
         >
           &copy; Ijonas Kisselbach
-        </a>
+        </Link>
       </footer>
-    </div>
+
+
+    </Flex>
+
+
+
   )
 }
 
