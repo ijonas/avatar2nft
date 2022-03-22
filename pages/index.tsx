@@ -61,7 +61,6 @@ const Home: NextPage = () => {
 
   const [accountData, disconnect] = useAccount({fetchEns: true});
 
-  
   return (
     <Flex direction="column">
       <HStack padding={5}>
@@ -107,9 +106,6 @@ const Home: NextPage = () => {
 
 
     </Flex>
-
-
-
   )
 }
 

@@ -12,32 +12,27 @@ export const useIsMounted = () => {
 const Connect = () => {
   const isMounted = useIsMounted();
   const [connectData, connect] = useConnect()
-
   const isConnected:boolean = !connectData.data.connected;
 
-  if (isConnected) {
-    return (
-      <HStack>
-        <Heading>avatar2nft</Heading>
-        <Text>|</Text>
-        <Text>Connect</Text>
-        {
-connectData.data.connectors.map((connector) => (
-  <Button
-    disabled={isMounted ? !connector.ready : false}
-    key={connector.id}
-    onClick={() => connect(connector)}
-  >
-    {isMounted ? connector.name : connector.id === 'injected' ? connector.id : connector.name}
-    {isMounted ? !connector.ready && ' (unsupported)' : ''}
-  </Button>
-))          
-        }
-      </HStack>
-
-      )
-  }
-  return undefined;
+  return (
+    <HStack>
+      <Heading>avatar2nft</Heading>
+      <Text>|</Text>
+      <Text>Connect</Text>
+      {
+        connectData.data.connectors.map((connector) => (
+          <Button
+            disabled={isMounted ? !connector.ready : false}
+            key={connector.id}
+            onClick={() => connect(connector)}
+          >
+            {isMounted ? connector.name : connector.id === 'injected' ? connector.id : connector.name}
+            {isMounted ? !connector.ready && ' (unsupported)' : ''}
+          </Button>
+        ))          
+      }
+    </HStack>
+  )
 }
 
 export default Connect

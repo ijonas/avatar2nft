@@ -27,7 +27,7 @@ const Account = ({accountData, disconnect}: any) => {
         {/* <NetworkSwitch></NetworkSwitch> */}
 
       </VStack>
-      <Button color='teal' href='#' onClick={disconnect}>Disconnect</Button>
+      <Button color='teal' onClick={disconnect}>Disconnect</Button>
 
     </HStack>
   )
