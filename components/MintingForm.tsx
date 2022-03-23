@@ -1,14 +1,10 @@
-import { useForm } from "react-hook-form";
-
 import {  Button, Text, VStack, Image, Heading, Link } from '@chakra-ui/react'
 import { useAccount, useConnect, useContractWrite } from "wagmi";
 import React, { useState } from "react";
-import { config } from "process";
 
 const avatarABI = require('../Avatar.abi.json');
 
 const MintingForm = ({metadataURI, storedImageURL, onSubmit, imageName}:any) => {
-  const { handleSubmit, register, formState: { errors } } = useForm();
   const [accountData, disconnect] = useAccount({fetchEns: true});
   const [connectData, connect] = useConnect()
   const [minting, setMinting] = useState(false);
@@ -30,7 +26,6 @@ const MintingForm = ({metadataURI, storedImageURL, onSubmit, imageName}:any) => 
       setMinting(true);
       setMintingError("");
       awardItem({args: [accountData.data?.address, metadataURI]}).then(({data, error}: any) => {
-        console.log({data, error})
         if (error) {
           setMintingError(error.message);
         } else {
@@ -48,7 +43,6 @@ const MintingForm = ({metadataURI, storedImageURL, onSubmit, imageName}:any) => 
         <VStack>
             <Heading>{imageName}</Heading>
             <Image src={storedImageURL} alt={imageName} boxSize='300px' objectFit="cover"></Image>
-      
 
             { !connectData?.data?.connected
               ? <Text>Please connect to your wallet using the buttons at the top of the screen.</Text>
@@ -56,10 +50,14 @@ const MintingForm = ({metadataURI, storedImageURL, onSubmit, imageName}:any) => 
             }
             { minting 
               ? (<Button colorScheme='teal' size='md' disabled>Minting...</Button>)
+              : txHash.length > 0 
+              ? (<Button colorScheme='teal' size='md' disabled={true} onClick={mint}>Minted</Button>)
               : (<Button colorScheme='teal' size='md' disabled={!connectData?.data?.connected} onClick={mint}>Mint</Button>)
             }
             {mintingError.length>0 && <Text>{mintingError}</Text>}
-            {txHash.length>0 && <Link href={explorerUrl(txHash)}>Transaction Hash</Link>}
+            {txHash.length>0 && <Text>Follow transaction on <Link color='teal' href={explorerUrl(txHash)}>Etherscan</Link></Text>}
+            {txHash.length>0 && <Text>Visit your profile on <Link color='teal' href="https://testnets.opensea.io/account">Open Sea</Link></Text>}
+            {txHash.length>0 && <Text><Link color='teal' href="/">Start Again...</Link></Text>}
 
         </VStack>
           
